@@ -100,6 +100,9 @@ class HelloArActivity : AppCompatActivity() {
       session.config.apply {
         lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
 
+        // Set camera focus mode to auto focus
+        focusMode = Config.FocusMode.AUTO
+
         // Depth API is used if it is configured in Hello AR's settings.
         depthMode =
           if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
