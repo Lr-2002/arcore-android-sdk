@@ -28,6 +28,7 @@ import com.google.ar.core.InstantPlacementPoint
 import com.google.ar.core.LightEstimate
 import com.google.ar.core.Plane
 import com.google.ar.core.Point
+import com.google.ar.core.Pose
 import com.google.ar.core.Session
 import com.google.ar.core.Trackable
 import com.google.ar.core.TrackingFailureReason
@@ -48,6 +49,8 @@ import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.NotYetAvailableException
 import java.io.IOException
 import java.nio.ByteBuffer
+
+import com.google.ar.core.examples.kotlin.helloar.PoseTracker
 
 /** Renders the HelloAR application using our example Renderer. */
 class HelloArRenderer(val activity: HelloArActivity) :
@@ -114,6 +117,9 @@ class HelloArRenderer(val activity: HelloArActivity) :
   // Environmental HDR
   lateinit var dfgTexture: Texture
   lateinit var cubemapFilter: SpecularCubemapFilter
+
+  // Pose tracking
+  private val poseTracker = PoseTracker()
 
   // Temporary matrix allocated here to reduce number of allocations for each frame.
   val modelMatrix = FloatArray(16)
@@ -350,6 +356,18 @@ class HelloArRenderer(val activity: HelloArActivity) :
       return
     }
 
+    // -- Update and display phone pose
+    if (camera.trackingState == TrackingState.TRACKING) {
+      // Get the current pose of the device
+      val cameraPose = camera.displayOrientedPose
+      
+      // Update the pose tracker with the current pose
+      poseTracker.updatePose(cameraPose)
+      
+      // Update the pose display
+      activity.view.updatePoseDisplay(poseTracker.getCurrentRelativePose())
+    }
+
     // -- Draw non-occluded virtual objects (planes, point cloud)
 
     // Get projection matrix.
@@ -478,13 +496,19 @@ class HelloArRenderer(val activity: HelloArActivity) :
   // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
   private fun handleTap(frame: Frame, camera: Camera) {
     if (camera.trackingState != TrackingState.TRACKING) return
-    val tap = activity.view.tapHelper.poll() ?: return
+    val tapEvent = activity.view.tapHelper.poll() ?: return
+
+    // Double tap to reset the initial pose
+    if (tapEvent.isDoubleTap && camera.trackingState == TrackingState.TRACKING) {
+      poseTracker.resetInitialPose(camera.displayOrientedPose)
+      return
+    }
 
     val hitResultList =
       if (activity.instantPlacementSettings.isInstantPlacementEnabled) {
-        frame.hitTestInstantPlacement(tap.x, tap.y, APPROXIMATE_DISTANCE_METERS)
+        frame.hitTestInstantPlacement(tapEvent.x, tapEvent.y, APPROXIMATE_DISTANCE_METERS)
       } else {
-        frame.hitTest(tap)
+        frame.hitTest(tapEvent.motionEvent)
       }
 
     // Hits are sorted by depth. Consider only closest hit on a plane, Oriented Point, Depth Point,

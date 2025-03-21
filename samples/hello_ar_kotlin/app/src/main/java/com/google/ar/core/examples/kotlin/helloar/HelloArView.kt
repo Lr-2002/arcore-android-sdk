@@ -20,17 +20,19 @@ import android.opengl.GLSurfaceView
 import android.view.View
 import android.widget.ImageButton
 import android.widget.PopupMenu
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.google.ar.core.Config
 import com.google.ar.core.examples.java.common.helpers.SnackbarHelper
-import com.google.ar.core.examples.java.common.helpers.TapHelper
+import com.google.ar.core.examples.kotlin.helloar.DoubleTapHelper
 
 /** Contains UI elements for Hello AR. */
 class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
   val root = View.inflate(activity, R.layout.activity_main, null)
   val surfaceView = root.findViewById<GLSurfaceView>(R.id.surfaceview)
+  val poseTextView = root.findViewById<TextView>(R.id.pose_text_view)
   val settingsButton =
     root.findViewById<ImageButton>(R.id.settings_button).apply {
       setOnClickListener { v ->
@@ -52,7 +54,16 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
     get() = activity.arCoreSessionHelper.session
 
   val snackbarHelper = SnackbarHelper()
-  val tapHelper = TapHelper(activity).also { surfaceView.setOnTouchListener(it) }
+  val tapHelper = DoubleTapHelper(activity).also { surfaceView.setOnTouchListener(it) }
+
+  /**
+   * Updates the pose text view with the current pose information.
+   */
+  fun updatePoseDisplay(relativePose: PoseTracker.RelativePose) {
+    activity.runOnUiThread {
+      poseTextView.text = relativePose.toFormattedString()
+    }
+  }
 
   override fun onResume(owner: LifecycleOwner) {
     surfaceView.onResume()
