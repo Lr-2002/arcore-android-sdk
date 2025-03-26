@@ -55,10 +55,10 @@ class HelloArActivity : AppCompatActivity() {
   val depthSettings = DepthSettings()
   
   // WebSocket client for sending pose data
-  private lateinit var webSocketClient: WebSocketClient
+  private var webSocketClient: WebSocketClient? = null
   
   // Handler for periodic pose updates
-  private val handler = Handler(Looper.getMainLooper())
+  private var handler: Handler? = null
   private var poseUpdateRunnable: Runnable? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,9 +106,21 @@ class HelloArActivity : AppCompatActivity() {
     depthSettings.onCreate(this)
     instantPlacementSettings.onCreate(this)
     
-    // Initialize WebSocket client
-    webSocketClient = WebSocketClient()
-    lifecycle.addObserver(webSocketClient)
+    // Get connection parameters from intent
+    val ipAddress = intent.getStringExtra(ConnectionSetupActivity.EXTRA_IP_ADDRESS) 
+        ?: ConnectionSetupActivity.DEFAULT_IP_ADDRESS
+    val portNumber = intent.getStringExtra(ConnectionSetupActivity.EXTRA_PORT_NUMBER) 
+        ?: ConnectionSetupActivity.DEFAULT_PORT_NUMBER
+    
+    // Create WebSocket URL
+    val serverUrl = "ws://$ipAddress:$portNumber"
+    
+    // Initialize WebSocket client with the server URL
+    webSocketClient = WebSocketClient(serverUrl)
+    lifecycle.addObserver(webSocketClient!!)
+    
+    // Initialize pose update handler
+    handler = Handler(Looper.getMainLooper())
     
     // Start periodic pose updates
     startPoseUpdates()
@@ -124,15 +136,15 @@ class HelloArActivity : AppCompatActivity() {
         val currentPose = renderer.poseTracker.getCurrentRelativePose()
         
         // Send the pose data through the WebSocket
-        webSocketClient.sendPoseData(currentPose)
+        webSocketClient?.sendPoseData(currentPose)
         
         // Schedule the next update
-        handler.postDelayed(this, POSE_UPDATE_INTERVAL_MS)
+        handler?.postDelayed(this, POSE_UPDATE_INTERVAL_MS)
       }
     }
     
     // Start the periodic updates
-    handler.post(poseUpdateRunnable!!)
+    handler?.post(poseUpdateRunnable!!)
   }
   
   /**
@@ -140,7 +152,7 @@ class HelloArActivity : AppCompatActivity() {
    */
   private fun stopPoseUpdates() {
     poseUpdateRunnable?.let {
-      handler.removeCallbacks(it)
+      handler?.removeCallbacks(it)
       poseUpdateRunnable = null
     }
   }

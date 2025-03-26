@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
 /**
  * WebSocket client to send pose data to a server.
  */
-class WebSocketClient(private val serverUrl: String = "ws://10.1.123.244:9999") : DefaultLifecycleObserver {
+class WebSocketClient(private val serverUrl: String) : DefaultLifecycleObserver {
     companion object {
         private const val TAG = "WebSocketClient"
         private const val RECONNECT_DELAY = 2000L // 2 seconds

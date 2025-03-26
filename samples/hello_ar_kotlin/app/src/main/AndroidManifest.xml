@@ -41,15 +41,21 @@
       tools:ignore="GoogleAppIndexingWarning">
 
     <activity
+        android:name="com.google.ar.core.examples.kotlin.helloar.ConnectionSetupActivity"
+        android:exported="true"
+        android:theme="@style/Theme.MaterialComponents.Light.NoActionBar">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+
+    <activity
         android:name="com.google.ar.core.examples.kotlin.helloar.HelloArActivity"
         android:configChanges="orientation|screenSize"
         android:exported="true"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked">
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN"/>
-        <category android:name="android.intent.category.LAUNCHER"/>
-      </intent-filter>
     </activity>
     <!-- Indicates whether "Google Play Services for AR" (ARCore) is "required" or "optional". -->
     <meta-data android:name="com.google.ar.core" android:value="required" />
