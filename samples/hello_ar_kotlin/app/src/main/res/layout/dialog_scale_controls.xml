@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Scale Value Display -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Scale:"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:id="@+id/scale_value_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1.00"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Scale Seek Bar -->
+    <SeekBar
+        android:id="@+id/scale_seek_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:max="990"
+        android:progress="90" />
+
+    <!-- Scale Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <Button
+            android:id="@+id/btn_scale_down"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Scale Down"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btn_scale_up"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Scale Up" />
+    </LinearLayout>
+
+    <!-- Reset Button -->
+    <Button
+        android:id="@+id/btn_reset_scale"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Reset Scale" />
+
+</LinearLayout>

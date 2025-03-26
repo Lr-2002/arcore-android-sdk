@@ -86,6 +86,9 @@ class HelloArActivity : AppCompatActivity() {
     view = HelloArView(this)
     lifecycle.addObserver(view)
     setContentView(view.root)
+    
+    // Connect the view with the renderer to access the PoseTracker
+    view.setRenderer(renderer)
 
     // Sets up an example renderer using our HelloARRenderer.
     SampleRender(view.surfaceView, renderer, assets)

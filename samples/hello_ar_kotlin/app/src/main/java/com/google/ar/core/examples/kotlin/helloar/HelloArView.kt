@@ -21,6 +21,13 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.PopupMenu
 import android.widget.TextView
+import android.widget.Button
+import android.widget.Switch
+import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -41,6 +48,10 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
             when (item.itemId) {
               R.id.depth_settings -> launchDepthSettingsMenuDialog()
               R.id.instant_placement_settings -> launchInstantPlacementSettingsMenuDialog()
+              R.id.position_controls -> showPositionControlsDialog()
+              R.id.rotation_controls -> showRotationControlsDialog()
+              R.id.scale_controls -> showScaleControlsDialog()
+              R.id.snapping_controls -> showSnappingControlsDialog()
               else -> null
             } != null
           }
@@ -55,6 +66,16 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
 
   val snackbarHelper = SnackbarHelper()
   val tapHelper = DoubleTapHelper(activity).also { surfaceView.setOnTouchListener(it) }
+  
+  // Reference to the renderer to access the PoseTracker
+  private var renderer: HelloArRenderer? = null
+  
+  /**
+   * Sets the renderer reference to access the PoseTracker
+   */
+  fun setRenderer(renderer: HelloArRenderer) {
+    this.renderer = renderer
+  }
 
   /**
    * Updates the pose text view with the current pose information.
@@ -71,6 +92,220 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
 
   override fun onPause(owner: LifecycleOwner) {
     surfaceView.onPause()
+  }
+
+  /**
+   * Shows a dialog with position control options.
+   */
+  private fun showPositionControlsDialog() {
+    val poseTracker = renderer?.poseTracker ?: return
+    
+    val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_position_controls, null)
+    val dialog = AlertDialog.Builder(activity)
+      .setTitle("Position Controls")
+      .setView(dialogView)
+      .setPositiveButton("Close", null)
+      .create()
+    
+    // X position controls
+    dialogView.findViewById<Button>(R.id.btn_x_minus)?.setOnClickListener {
+      poseTracker.translate(-0.05f, 0f, 0f)
+    }
+    dialogView.findViewById<Button>(R.id.btn_x_plus)?.setOnClickListener {
+      poseTracker.translate(0.05f, 0f, 0f)
+    }
+    
+    // Y position controls
+    dialogView.findViewById<Button>(R.id.btn_y_minus)?.setOnClickListener {
+      poseTracker.translate(0f, -0.05f, 0f)
+    }
+    dialogView.findViewById<Button>(R.id.btn_y_plus)?.setOnClickListener {
+      poseTracker.translate(0f, 0.05f, 0f)
+    }
+    
+    // Z position controls
+    dialogView.findViewById<Button>(R.id.btn_z_minus)?.setOnClickListener {
+      poseTracker.translate(0f, 0f, -0.05f)
+    }
+    dialogView.findViewById<Button>(R.id.btn_z_plus)?.setOnClickListener {
+      poseTracker.translate(0f, 0f, 0.05f)
+    }
+    
+    // Reset position button
+    dialogView.findViewById<Button>(R.id.btn_reset_position)?.setOnClickListener {
+      poseTracker.setPosition(0f, 0f, 0f)
+      Toast.makeText(activity, "Position reset", Toast.LENGTH_SHORT).show()
+    }
+    
+    dialog.show()
+  }
+  
+  /**
+   * Shows a dialog with rotation control options.
+   */
+  private fun showRotationControlsDialog() {
+    val poseTracker = renderer?.poseTracker ?: return
+    
+    val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_rotation_controls, null)
+    val dialog = AlertDialog.Builder(activity)
+      .setTitle("Rotation Controls")
+      .setView(dialogView)
+      .setPositiveButton("Close", null)
+      .create()
+    
+    // Roll controls
+    dialogView.findViewById<Button>(R.id.btn_roll_minus)?.setOnClickListener {
+      poseTracker.rotate(-15f, 0f, 0f)
+    }
+    dialogView.findViewById<Button>(R.id.btn_roll_plus)?.setOnClickListener {
+      poseTracker.rotate(15f, 0f, 0f)
+    }
+    
+    // Pitch controls
+    dialogView.findViewById<Button>(R.id.btn_pitch_minus)?.setOnClickListener {
+      poseTracker.rotate(0f, -15f, 0f)
+    }
+    dialogView.findViewById<Button>(R.id.btn_pitch_plus)?.setOnClickListener {
+      poseTracker.rotate(0f, 15f, 0f)
+    }
+    
+    // Yaw controls
+    dialogView.findViewById<Button>(R.id.btn_yaw_minus)?.setOnClickListener {
+      poseTracker.rotate(0f, 0f, -15f)
+    }
+    dialogView.findViewById<Button>(R.id.btn_yaw_plus)?.setOnClickListener {
+      poseTracker.rotate(0f, 0f, 15f)
+    }
+    
+    // Reset rotation button
+    dialogView.findViewById<Button>(R.id.btn_reset_rotation)?.setOnClickListener {
+      poseTracker.setRotation(0f, 0f, 0f)
+      Toast.makeText(activity, "Rotation reset", Toast.LENGTH_SHORT).show()
+    }
+    
+    dialog.show()
+  }
+  
+  /**
+   * Shows a dialog with scale control options.
+   */
+  private fun showScaleControlsDialog() {
+    val poseTracker = renderer?.poseTracker ?: return
+    
+    val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_scale_controls, null)
+    val dialog = AlertDialog.Builder(activity)
+      .setTitle("Scale Controls")
+      .setView(dialogView)
+      .setPositiveButton("Close", null)
+      .create()
+    
+    val scaleSeekBar = dialogView.findViewById<SeekBar>(R.id.scale_seek_bar)
+    val scaleValueText = dialogView.findViewById<TextView>(R.id.scale_value_text)
+    
+    // Initialize the seek bar with the current scale value
+    val currentScale = poseTracker.getScale()
+    scaleSeekBar?.progress = ((currentScale - 0.1f) * 100f).toInt()
+    scaleValueText?.text = String.format("%.2f", currentScale)
+    
+    // Update scale when seek bar changes
+    scaleSeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+      override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+        val newScale = 0.1f + (progress / 100f)
+        poseTracker.setScale(newScale)
+        scaleValueText?.text = String.format("%.2f", newScale)
+      }
+      
+      override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+      
+      override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+    })
+    
+    // Scale decrease button
+    dialogView.findViewById<Button>(R.id.btn_scale_down)?.setOnClickListener {
+      poseTracker.scale(0.9f)
+      val newScale = poseTracker.getScale()
+      scaleSeekBar?.progress = ((newScale - 0.1f) * 100f).toInt()
+      scaleValueText?.text = String.format("%.2f", newScale)
+    }
+    
+    // Scale increase button
+    dialogView.findViewById<Button>(R.id.btn_scale_up)?.setOnClickListener {
+      poseTracker.scale(1.1f)
+      val newScale = poseTracker.getScale()
+      scaleSeekBar?.progress = ((newScale - 0.1f) * 100f).toInt()
+      scaleValueText?.text = String.format("%.2f", newScale)
+    }
+    
+    // Reset scale button
+    dialogView.findViewById<Button>(R.id.btn_reset_scale)?.setOnClickListener {
+      poseTracker.setScale(1.0f)
+      scaleSeekBar?.progress = 90 // 1.0 - 0.1 = 0.9 * 100 = 90
+      scaleValueText?.text = "1.00"
+      Toast.makeText(activity, "Scale reset", Toast.LENGTH_SHORT).show()
+    }
+    
+    dialog.show()
+  }
+  
+  /**
+   * Shows a dialog with snapping control options.
+   */
+  private fun showSnappingControlsDialog() {
+    val poseTracker = renderer?.poseTracker ?: return
+    
+    val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_snapping_controls, null)
+    val dialog = AlertDialog.Builder(activity)
+      .setTitle("Snapping Controls")
+      .setView(dialogView)
+      .setPositiveButton("Close", null)
+      .create()
+    
+    // Snapping toggle switch
+    val snapSwitch = dialogView.findViewById<Switch>(R.id.switch_snap_enabled)
+    snapSwitch?.isChecked = poseTracker.isSnapEnabled()
+    snapSwitch?.setOnCheckedChangeListener { _, isChecked ->
+      poseTracker.setSnapEnabled(isChecked)
+      Toast.makeText(
+        activity, 
+        if (isChecked) "Snapping enabled" else "Snapping disabled", 
+        Toast.LENGTH_SHORT
+      ).show()
+    }
+    
+    // Grid size controls
+    val gridSizeSeekBar = dialogView.findViewById<SeekBar>(R.id.grid_size_seek_bar)
+    val gridSizeText = dialogView.findViewById<TextView>(R.id.grid_size_text)
+    
+    gridSizeSeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+      override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+        val gridSize = 0.01f + (progress / 100f) * 0.19f // Range from 0.01 to 0.2
+        poseTracker.setSnapGridSize(gridSize)
+        gridSizeText?.text = String.format("%.2f m", gridSize)
+      }
+      
+      override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+      
+      override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+    })
+    
+    // Rotation snap controls
+    val rotationSnapSeekBar = dialogView.findViewById<SeekBar>(R.id.rotation_snap_seek_bar)
+    val rotationSnapText = dialogView.findViewById<TextView>(R.id.rotation_snap_text)
+    
+    rotationSnapSeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+      override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+        val snapDegrees = 1f + progress * 0.44f // Range from 1 to 45 degrees
+        val snapDegreesRounded = Math.round(snapDegrees)
+        poseTracker.setSnapRotationDegrees(snapDegreesRounded.toFloat())
+        rotationSnapText?.text = String.format("%d°", snapDegreesRounded)
+      }
+      
+      override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+      
+      override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+    })
+    
+    dialog.show()
   }
 
   /**

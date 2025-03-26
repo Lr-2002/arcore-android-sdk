@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Snap Enable Switch -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Enable Position Snapping" />
+
+        <Switch
+            android:id="@+id/switch_snap_enabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- Grid Size Controls -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Grid Size:"
+        android:layout_marginBottom="4dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <SeekBar
+            android:id="@+id/grid_size_seek_bar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="20" />
+
+        <TextView
+            android:id="@+id/grid_size_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.05 m"
+            android:layout_marginStart="8dp"
+            android:minWidth="50dp" />
+    </LinearLayout>
+
+    <!-- Rotation Snap Controls -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Rotation Snap Angle:"
+        android:layout_marginBottom="4dp"
+        android:layout_marginTop="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <SeekBar
+            android:id="@+id/rotation_snap_seek_bar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="30" />
+
+        <TextView
+            android:id="@+id/rotation_snap_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="15°"
+            android:layout_marginStart="8dp"
+            android:minWidth="50dp" />
+    </LinearLayout>
+
+</LinearLayout>

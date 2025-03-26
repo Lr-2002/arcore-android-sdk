@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Roll Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Roll (X):"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btn_roll_minus"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="-"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/btn_roll_plus"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="+"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <!-- Pitch Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pitch (Y):"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btn_pitch_minus"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="-"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/btn_pitch_plus"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="+"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <!-- Yaw Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Yaw (Z):"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btn_yaw_minus"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="-"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/btn_yaw_plus"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="+"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <!-- Reset Button -->
+    <Button
+        android:id="@+id/btn_reset_rotation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Reset Rotation" />
+
+</LinearLayout>

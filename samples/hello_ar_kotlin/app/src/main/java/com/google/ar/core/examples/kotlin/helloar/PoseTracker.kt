@@ -21,10 +21,14 @@ import kotlin.math.asin
 import kotlin.math.abs
 import kotlin.math.PI
 import kotlin.math.sign
+import kotlin.math.min
+import kotlin.math.max
+import kotlin.math.round
 import java.util.LinkedList
 
 /**
  * Helper class to track the phone's pose relative to an initial pose.
+ * Provides functionality for manipulating position, rotation, and scale.
  */
 class PoseTracker {
     private var initialPose: Pose? = null
@@ -34,9 +38,22 @@ class PoseTracker {
     private val filterWindowSize = 5
     private val positionHistory = LinkedList<FloatArray>()
     private val rotationHistory = LinkedList<FloatArray>()
+    
+    // Manipulation parameters
+    private var scale: Float = 1.0f
+    private var userTranslation = floatArrayOf(0f, 0f, 0f)
+    private var userRotation = floatArrayOf(0f, 0f, 0f)
+    
+    // Snapping parameters
+    private var snapEnabled = false
+    private var snapGridSize = 0.05f  // 5cm grid
+    private var snapRotationDegrees = 15f
 
     // Extension function to convert radians to degrees
     private fun Double.toDegrees() = this * 180.0 / PI
+    
+    // Extension function to convert degrees to radians
+    private fun Float.toRadians() = this * PI.toFloat() / 180f
 
     /**
      * Updates the current pose and calculates the relative pose from the initial pose.
@@ -103,15 +120,81 @@ class PoseTracker {
             val avgPosition = calculateAveragePosition()
             val avgRotation = calculateAverageRotation()
             
+            // Apply user manipulations (translation, rotation, scale)
+            val finalPosition = applyUserManipulations(avgPosition, avgRotation)
+            val finalRotation = applyUserRotation(avgRotation)
+            
             currentRelativePose = RelativePose(
-                avgPosition[0],
-                avgPosition[1],
-                avgPosition[2],
-                avgRotation[0],
-                avgRotation[1],
-                avgRotation[2]
+                finalPosition[0],
+                finalPosition[1],
+                finalPosition[2],
+                finalRotation[0],
+                finalRotation[1],
+                finalRotation[2],
+                scale
             )
         }
+    }
+    
+    /**
+     * Applies user-defined manipulations to the position.
+     */
+    private fun applyUserManipulations(position: FloatArray, rotation: FloatArray): FloatArray {
+        val result = FloatArray(3)
+        
+        // Apply scale
+        result[0] = position[0] * scale
+        result[1] = position[1] * scale
+        result[2] = position[2] * scale
+        
+        // Apply user translation
+        result[0] += userTranslation[0]
+        result[1] += userTranslation[1]
+        result[2] += userTranslation[2]
+        
+        // Apply snapping if enabled
+        if (snapEnabled) {
+            result[0] = snapToGrid(result[0])
+            result[1] = snapToGrid(result[1])
+            result[2] = snapToGrid(result[2])
+        }
+        
+        return result
+    }
+    
+    /**
+     * Applies user-defined rotation adjustments.
+     */
+    private fun applyUserRotation(rotation: FloatArray): FloatArray {
+        val result = FloatArray(3)
+        
+        // Apply user rotation
+        result[0] = rotation[0] + userRotation[0]
+        result[1] = rotation[1] + userRotation[1]
+        result[2] = rotation[2] + userRotation[2]
+        
+        // Apply rotation snapping if enabled
+        if (snapEnabled) {
+            result[0] = snapToRotation(result[0])
+            result[1] = snapToRotation(result[1])
+            result[2] = snapToRotation(result[2])
+        }
+        
+        return result
+    }
+    
+    /**
+     * Snaps a value to the nearest grid point.
+     */
+    private fun snapToGrid(value: Float): Float {
+        return round(value / snapGridSize) * snapGridSize
+    }
+    
+    /**
+     * Snaps a rotation value to the nearest angle increment.
+     */
+    private fun snapToRotation(degrees: Float): Float {
+        return round(degrees / snapRotationDegrees) * snapRotationDegrees
     }
     
     /**
@@ -172,6 +255,11 @@ class PoseTracker {
             positionHistory.add(initialPosition.clone())
             rotationHistory.add(initialRotation.clone())
         }
+        
+        // Reset user manipulations
+        userTranslation = floatArrayOf(0f, 0f, 0f)
+        userRotation = floatArrayOf(0f, 0f, 0f)
+        scale = 1.0f
     }
 
     /**
@@ -179,6 +267,93 @@ class PoseTracker {
      */
     fun getCurrentRelativePose(): RelativePose {
         return currentRelativePose
+    }
+    
+    /**
+     * Translates the object by the specified amounts.
+     */
+    fun translate(dx: Float, dy: Float, dz: Float) {
+        userTranslation[0] += dx
+        userTranslation[1] += dy
+        userTranslation[2] += dz
+    }
+    
+    /**
+     * Sets the absolute position of the object.
+     */
+    fun setPosition(x: Float, y: Float, z: Float) {
+        userTranslation[0] = x
+        userTranslation[1] = y
+        userTranslation[2] = z
+    }
+    
+    /**
+     * Rotates the object by the specified angles in degrees.
+     */
+    fun rotate(dRoll: Float, dPitch: Float, dYaw: Float) {
+        userRotation[0] += dRoll
+        userRotation[1] += dPitch
+        userRotation[2] += dYaw
+    }
+    
+    /**
+     * Sets the absolute rotation of the object in degrees.
+     */
+    fun setRotation(roll: Float, pitch: Float, yaw: Float) {
+        userRotation[0] = roll
+        userRotation[1] = pitch
+        userRotation[2] = yaw
+    }
+    
+    /**
+     * Scales the object by the specified factor.
+     */
+    fun scale(factor: Float) {
+        scale *= factor
+        // Clamp scale to reasonable limits
+        scale = max(0.1f, min(scale, 10.0f))
+    }
+    
+    /**
+     * Sets the absolute scale of the object.
+     */
+    fun setScale(newScale: Float) {
+        scale = max(0.1f, min(newScale, 10.0f))
+    }
+    
+    /**
+     * Gets the current scale.
+     */
+    fun getScale(): Float {
+        return scale
+    }
+    
+    /**
+     * Enables or disables position and rotation snapping.
+     */
+    fun setSnapEnabled(enabled: Boolean) {
+        snapEnabled = enabled
+    }
+    
+    /**
+     * Sets the grid size for position snapping.
+     */
+    fun setSnapGridSize(gridSize: Float) {
+        snapGridSize = max(0.01f, gridSize)
+    }
+    
+    /**
+     * Sets the angle increment for rotation snapping.
+     */
+    fun setSnapRotationDegrees(degrees: Float) {
+        snapRotationDegrees = max(1f, degrees)
+    }
+    
+    /**
+     * Returns whether snapping is currently enabled.
+     */
+    fun isSnapEnabled(): Boolean {
+        return snapEnabled
     }
 
     /**
@@ -190,15 +365,16 @@ class PoseTracker {
         val z: Float = 0f,
         val roll: Float = 0f,
         val pitch: Float = 0f,
-        val yaw: Float = 0f
+        val yaw: Float = 0f,
+        val scale: Float = 1.0f
     ) {
         /**
          * Returns a formatted string representation of the pose.
          */
         fun toFormattedString(): String {
             return String.format(
-                "Position: (%.2f, %.2f, %.2f)\nRotation: (%.2f, %.2f, %.2f)",
-                x, y, z, roll, pitch, yaw
+                "Position: (%.2f, %.2f, %.2f)\nRotation: (%.2f, %.2f, %.2f)\nScale: %.2f",
+                x, y, z, roll, pitch, yaw, scale
             )
         }
     }

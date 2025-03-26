@@ -119,7 +119,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
   lateinit var cubemapFilter: SpecularCubemapFilter
 
   // Pose tracking
-  private val poseTracker = PoseTracker()
+  val poseTracker = PoseTracker()
 
   // Temporary matrix allocated here to reduce number of allocations for each frame.
   val modelMatrix = FloatArray(16)
