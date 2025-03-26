@@ -16,6 +16,8 @@
 package com.google.ar.core.examples.kotlin.helloar
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -42,6 +44,7 @@ import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationExceptio
 class HelloArActivity : AppCompatActivity() {
   companion object {
     private const val TAG = "HelloArActivity"
+    private const val POSE_UPDATE_INTERVAL_MS = 100L // 10 updates per second
   }
 
   lateinit var arCoreSessionHelper: ARCoreSessionLifecycleHelper
@@ -50,6 +53,13 @@ class HelloArActivity : AppCompatActivity() {
 
   val instantPlacementSettings = InstantPlacementSettings()
   val depthSettings = DepthSettings()
+  
+  // WebSocket client for sending pose data
+  private lateinit var webSocketClient: WebSocketClient
+  
+  // Handler for periodic pose updates
+  private val handler = Handler(Looper.getMainLooper())
+  private var poseUpdateRunnable: Runnable? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -95,6 +105,44 @@ class HelloArActivity : AppCompatActivity() {
 
     depthSettings.onCreate(this)
     instantPlacementSettings.onCreate(this)
+    
+    // Initialize WebSocket client
+    webSocketClient = WebSocketClient()
+    lifecycle.addObserver(webSocketClient)
+    
+    // Start periodic pose updates
+    startPoseUpdates()
+  }
+  
+  /**
+   * Start sending periodic pose updates to the WebSocket server.
+   */
+  private fun startPoseUpdates() {
+    poseUpdateRunnable = object : Runnable {
+      override fun run() {
+        // Get the current pose from the PoseTracker
+        val currentPose = renderer.poseTracker.getCurrentRelativePose()
+        
+        // Send the pose data through the WebSocket
+        webSocketClient.sendPoseData(currentPose)
+        
+        // Schedule the next update
+        handler.postDelayed(this, POSE_UPDATE_INTERVAL_MS)
+      }
+    }
+    
+    // Start the periodic updates
+    handler.post(poseUpdateRunnable!!)
+  }
+  
+  /**
+   * Stop sending pose updates.
+   */
+  private fun stopPoseUpdates() {
+    poseUpdateRunnable?.let {
+      handler.removeCallbacks(it)
+      poseUpdateRunnable = null
+    }
   }
 
   // Configure the session, using Lighting Estimation, and Depth mode.
@@ -146,5 +194,20 @@ class HelloArActivity : AppCompatActivity() {
   override fun onWindowFocusChanged(hasFocus: Boolean) {
     super.onWindowFocusChanged(hasFocus)
     FullScreenHelper.setFullScreenOnWindowFocusChanged(this, hasFocus)
+  }
+  
+  override fun onPause() {
+    super.onPause()
+    stopPoseUpdates()
+  }
+  
+  override fun onResume() {
+    super.onResume()
+    startPoseUpdates()
+  }
+  
+  override fun onDestroy() {
+    super.onDestroy()
+    stopPoseUpdates()
   }
 }
