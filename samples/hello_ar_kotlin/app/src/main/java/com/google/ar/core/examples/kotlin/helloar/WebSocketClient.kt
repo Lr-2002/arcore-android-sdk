@@ -119,27 +119,30 @@ class WebSocketClient(private val serverUrl: String) : DefaultLifecycleObserver 
             val json = JSONObject()
             
             // Create rotation matrix as nested arrays
-            val rotationJson = JSONObject()
+            val rotationArray = JSONArray()
             
+            // First row
             val row0 = JSONArray()
             row0.put(rotationMatrix[0])
             row0.put(rotationMatrix[1])
             row0.put(rotationMatrix[2])
-            rotationJson.put("0", row0)
+            rotationArray.put(row0)
             
+            // Second row
             val row1 = JSONArray()
             row1.put(rotationMatrix[3])
             row1.put(rotationMatrix[4])
             row1.put(rotationMatrix[5])
-            rotationJson.put("1", row1)
+            rotationArray.put(row1)
             
+            // Third row
             val row2 = JSONArray()
             row2.put(rotationMatrix[6])
             row2.put(rotationMatrix[7])
             row2.put(rotationMatrix[8])
-            rotationJson.put("2", row2)
+            rotationArray.put(row2)
             
-            json.put("rotation", rotationJson)
+            json.put("rotation", rotationArray)
             
             // Add position as an array
             val positionArray = JSONArray()
@@ -217,27 +220,30 @@ class WebSocketClient(private val serverUrl: String) : DefaultLifecycleObserver 
             json.put("position", positionArray)
             
             // Create identity rotation matrix
-            val rotationJson = JSONObject()
+            val rotationArray = JSONArray()
             
+            // First row
             val row0 = JSONArray()
             row0.put(1)
             row0.put(0)
             row0.put(0)
-            rotationJson.put("0", row0)
+            rotationArray.put(row0)
             
+            // Second row
             val row1 = JSONArray()
             row1.put(0)
             row1.put(1)
             row1.put(0)
-            rotationJson.put("1", row1)
+            rotationArray.put(row1)
             
+            // Third row
             val row2 = JSONArray()
             row2.put(0)
             row2.put(0)
             row2.put(1)
-            rotationJson.put("2", row2)
+            rotationArray.put(row2)
             
-            json.put("rotation", rotationJson)
+            json.put("rotation", rotationArray)
             
             // Set button state to true
             json.put("button", true)
@@ -267,27 +273,30 @@ class WebSocketClient(private val serverUrl: String) : DefaultLifecycleObserver 
             json.put("position", positionArray)
             
             // Create identity rotation matrix
-            val rotationJson = JSONObject()
+            val rotationArray = JSONArray()
             
+            // First row
             val row0 = JSONArray()
             row0.put(1)
             row0.put(0)
             row0.put(0)
-            rotationJson.put("0", row0)
+            rotationArray.put(row0)
             
+            // Second row
             val row1 = JSONArray()
             row1.put(0)
             row1.put(1)
             row1.put(0)
-            rotationJson.put("1", row1)
+            rotationArray.put(row1)
             
+            // Third row
             val row2 = JSONArray()
             row2.put(0)
             row2.put(0)
             row2.put(1)
-            rotationJson.put("2", row2)
+            rotationArray.put(row2)
             
-            json.put("rotation", rotationJson)
+            json.put("rotation", rotationArray)
             
             // Set toggle state
             json.put("button", false)
@@ -317,27 +326,30 @@ class WebSocketClient(private val serverUrl: String) : DefaultLifecycleObserver 
             json.put("position", positionArray)
             
             // Create identity rotation matrix
-            val rotationJson = JSONObject()
+            val rotationArray = JSONArray()
             
+            // First row
             val row0 = JSONArray()
             row0.put(1)
             row0.put(0)
             row0.put(0)
-            rotationJson.put("0", row0)
+            rotationArray.put(row0)
             
+            // Second row
             val row1 = JSONArray()
             row1.put(0)
             row1.put(1)
             row1.put(0)
-            rotationJson.put("1", row1)
+            rotationArray.put(row1)
             
+            // Third row
             val row2 = JSONArray()
             row2.put(0)
             row2.put(0)
             row2.put(1)
-            rotationJson.put("2", row2)
+            rotationArray.put(row2)
             
-            json.put("rotation", rotationJson)
+            json.put("rotation", rotationArray)
             
             // Set reset flag
             json.put("button", false)

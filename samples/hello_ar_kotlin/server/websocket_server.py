@@ -50,6 +50,7 @@ async def handle_connection(websocket):
             try:
                 # Parse the JSON message
                 data = json.loads(message)
+                print(data)
                 message_type = data.get('type', 'pose_data')  # Default to pose_data for backward compatibility
                 timestamp = datetime.datetime.now()
                 formatted_time = timestamp.strftime('%H:%M:%S.%f')[:-3]
