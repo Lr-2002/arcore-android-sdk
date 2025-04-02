@@ -1,70 +1,51 @@
-ARCore SDK for Android
-======================
-Copyright 2017 Google LLC
+# AR Teleoperation for Android
 
-This SDK provides APIs for all of the essential AR features like motion
-tracking, environmental understanding, and light estimation. With these
-capabilities you can build entirely new AR experiences or enhance existing apps
-with AR features.
+[![ARCore](https://img.shields.io/badge/ARCore-Powered-brightgreen)](https://developers.google.com/ar)
 
+A mobile application for augmented reality teleoperation of robotic systems, built on Google's ARCore platform.
 
-## Breaking change affecting previously published 32-bit-only apps
+## Overview
 
-_Google Play Services for AR_ (ARCore) has removed support for 32-bit-only
-ARCore-enabled apps running on 64-bit devices. Support for 32-bit apps running
-on 32-bit devices is unaffected.
+This project extends the [Google ARCore Android SDK](https://github.com/google-ar/arcore-android-sdk) to enable AR-based teleoperation. It's designed to work with [MujocoAR](https://github.com/omarrayyann/MujocoAR) for robotic simulation and control.
 
-If you have published a 32-bit-only (`armeabi-v7a`) version of your
-ARCore-enabled app without publishing a corresponding 64-bit (`arm64-v8a`)
-version, you must update your app to include 64-bit native libraries.
-32-bit-only ARCore-enabled apps that are not updated by this time may crash when
-attempting to start an augmented reality (AR) session.
+## Getting Started
 
-To learn more about this breaking change, and for instructions on how to update
-your app, see https://developers.google.com/ar/64bit.
+### Prerequisites
 
+- Android device with [ARCore support](https://developers.google.com/ar/devices)
+- Google Play Services for AR (ARCore) installed
+- Camera permissions enabled on your device
 
-## Quick Start
+### Installation
 
-See the [Quickstart for Android Java](//developers.google.com/ar/develop/java/quickstart)
-or [Quickstart for Android NDK](//developers.google.com/ar/develop/c/quickstart)
-developer guide.
+#### Option 1: Direct APK Install
+1. Download the APK from [here](https://github.com/Lr-2002/arcore-android-sdk/blob/main/samples/hello_ar_kotlin/teleop/app-debug.apk)
+2. Install the APK on your Android device
+3. Grant camera permissions when prompted
 
+#### Option 2: Build from Source
+Clone this repository and build using Android Studio.
 
-## API Reference
+### Usage
 
-See the [ARCore SDK for Java API Reference](//developers.google.com/ar/reference/java)
-or [ARCore SDK for C API Reference](//developers.google.com/ar/reference/c).
+1. Set up the server side:
+   ```bash
+   cd samples/hello_ar_kotlin
+   mjpython server/simple.py  # This will display a box in the Mujoco environment
+   ```
 
+2. On your Android device:
+   - Launch the AR Teleoperation app
+   - Connect to the server by entering the IP address and port
+   - Follow the on-screen instructions to establish the connection
 
-## Release Notes
+For detailed usage instructions, refer to the [MujocoAR documentation](https://github.com/omarrayyann/MujocoAR).
 
-The SDK release notes are available on the
-[releases](//github.com/google-ar/arcore-android-sdk/releases) page.
+## Acknowledgements
 
+- Thanks to [Omar Rayyan](https://github.com/omarrayyann) for the MujocoAR project and collaboration
+- Based on [Google's ARCore Android SDK](https://github.com/google-ar/arcore-android-sdk)
 
-## Terms & Conditions
+## Future Updates
 
-By downloading the ARCore SDK for Android, you agree that the
-[**ARCore Additional Terms of Service**](https://developers.google.com/ar/develop/terms)
-governs your use thereof.
-
-
-## User privacy requirements
-
-You must disclose the use of Google Play Services for AR (ARCore) and how it
-collects and processes data, prominently in your application, easily accessible
-to users. You can do this by adding the following text on your main menu or
-notice screen: "This application runs on [Google Play Services for AR](//play.google.com/store/apps/details?id=com.google.ar.core) (ARCore),
-which is provided by Google LLC and governed by the [Google Privacy Policy](//policies.google.com/privacy)".
-
-See the [User privacy requirements](https://developers.google.com/ar/develop/privacy-requirements).
-
-## Deprecation policy
-
-Apps built with **ARCore SDK 1.12.0 or higher** are covered by the
-[Cloud Anchor API deprecation policy](//developers.google.com/ar/distribute/deprecation-policy).
-
-Apps built with **ARCore SDK 1.11.0 or lower** will be unable to host or resolve
-Cloud Anchors beginning December 2020 due to the SDK's use of an older,
-deprecated ARCore Cloud Anchor service.
+The application will be available on F-Droid and Google Play Store in future releases.
