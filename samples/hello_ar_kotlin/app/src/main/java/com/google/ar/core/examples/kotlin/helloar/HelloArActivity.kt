@@ -156,6 +156,7 @@ class HelloArActivity : AppCompatActivity() {
 			// Create the session config.
 			val config = Config(session)
 			config.instantPlacementMode = InstantPlacementMode.DISABLED
+			config.focusMode = Config.FocusMode.AUTO
 			session.configure(config)
 		} catch (e: UnavailableArcoreNotInstalledException) {
 			Toast.makeText(this, "Please install ARCore", Toast.LENGTH_LONG).show()
