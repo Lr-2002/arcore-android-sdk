@@ -22,6 +22,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.ar.core.Pose
 import okhttp3.*
 import org.json.JSONObject
+import org.json.JSONArray
 import java.util.concurrent.TimeUnit
 
 /**
@@ -112,24 +113,140 @@ class WebSocketClient(private val serverUrl: String) : DefaultLifecycleObserver 
         try {
             if (!isConnected) return
 
-            val json = JSONObject().apply {
-                put("type", "pose")
-                put("position", JSONObject().apply {
-                    put("x", position[0])
-                    put("y", position[1])
-                    put("z", position[2])
-                })
-                put("rotation", JSONObject().apply {
-                    put("roll", rotation[0])
-                    put("pitch", rotation[1])
-                    put("yaw", rotation[2])
-                })
-                put("isToggleActive", isToggleActive)
-            }
+            // Convert Euler angles (in degrees) to rotation matrix
+            val rotationMatrix = eulerAnglesToRotationMatrix(rotation)
+
+            val json = JSONObject()
+            
+            // Create rotation matrix as nested arrays
+            val rotationJson = JSONObject()
+            
+            val row0 = JSONArray()
+            row0.put(rotationMatrix[0])
+            row0.put(rotationMatrix[1])
+            row0.put(rotationMatrix[2])
+            rotationJson.put("0", row0)
+            
+            val row1 = JSONArray()
+            row1.put(rotationMatrix[3])
+            row1.put(rotationMatrix[4])
+            row1.put(rotationMatrix[5])
+            rotationJson.put("1", row1)
+            
+            val row2 = JSONArray()
+            row2.put(rotationMatrix[6])
+            row2.put(rotationMatrix[7])
+            row2.put(rotationMatrix[8])
+            rotationJson.put("2", row2)
+            
+            json.put("rotation", rotationJson)
+            
+            // Add position as an array
+            val positionArray = JSONArray()
+            positionArray.put(position[0])
+            positionArray.put(position[1])
+            positionArray.put(position[2])
+            json.put("position", positionArray)
+            
+            // Add button state (false by default)
+            json.put("button", false)
+            
+            // Add toggle state
+            json.put("toggle", isToggleActive)
 
             webSocket?.send(json.toString())
         } catch (e: Exception) {
             Log.e(TAG, "Error sending pose data: ${e.message}")
+        }
+    }
+
+    /**
+     * Convert Euler angles to rotation matrix.
+     * @param eulerAngles Array of [roll, pitch, yaw] in degrees
+     * @return 3x3 rotation matrix as a 9-element array [r11, r12, r13, r21, r22, r23, r31, r32, r33]
+     */
+    private fun eulerAnglesToRotationMatrix(eulerAngles: FloatArray): FloatArray {
+        // Convert degrees to radians
+        val roll = Math.toRadians(eulerAngles[0].toDouble())
+        val pitch = Math.toRadians(eulerAngles[1].toDouble())
+        val yaw = Math.toRadians(eulerAngles[2].toDouble())
+        
+        // Rotation matrix elements
+        val cosR = Math.cos(roll)
+        val sinR = Math.sin(roll)
+        val cosP = Math.cos(pitch)
+        val sinP = Math.sin(pitch)
+        val cosY = Math.cos(yaw)
+        val sinY = Math.sin(yaw)
+        
+        // Create rotation matrix (ZYX convention)
+        val matrix = FloatArray(9)
+        
+        // First row
+        matrix[0] = (cosY * cosP).toFloat()
+        matrix[1] = (cosY * sinP * sinR - sinY * cosR).toFloat()
+        matrix[2] = (cosY * sinP * cosR + sinY * sinR).toFloat()
+        
+        // Second row
+        matrix[3] = (sinY * cosP).toFloat()
+        matrix[4] = (sinY * sinP * sinR + cosY * cosR).toFloat()
+        matrix[5] = (sinY * sinP * cosR - cosY * sinR).toFloat()
+        
+        // Third row
+        matrix[6] = (-sinP).toFloat()
+        matrix[7] = (cosP * sinR).toFloat()
+        matrix[8] = (cosP * cosR).toFloat()
+        
+        return matrix
+    }
+
+    /**
+     * Sends button press to the server.
+     */
+    fun sendButtonPress() {
+        try {
+            if (!isConnected) return
+
+            val json = JSONObject()
+            
+            // Create position array
+            val positionArray = JSONArray()
+            positionArray.put(0)
+            positionArray.put(0)
+            positionArray.put(0)
+            json.put("position", positionArray)
+            
+            // Create identity rotation matrix
+            val rotationJson = JSONObject()
+            
+            val row0 = JSONArray()
+            row0.put(1)
+            row0.put(0)
+            row0.put(0)
+            rotationJson.put("0", row0)
+            
+            val row1 = JSONArray()
+            row1.put(0)
+            row1.put(1)
+            row1.put(0)
+            rotationJson.put("1", row1)
+            
+            val row2 = JSONArray()
+            row2.put(0)
+            row2.put(0)
+            row2.put(1)
+            rotationJson.put("2", row2)
+            
+            json.put("rotation", rotationJson)
+            
+            // Set button state to true
+            json.put("button", true)
+            json.put("toggle", false)
+
+            webSocket?.send(json.toString())
+            Log.d(TAG, "Sent button press")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error sending button press: ${e.message}")
         }
     }
 
@@ -140,34 +257,46 @@ class WebSocketClient(private val serverUrl: String) : DefaultLifecycleObserver 
         try {
             if (!isConnected) return
 
-            val json = JSONObject().apply {
-                put("type", "toggle")
-                put("isActive", isActive)
-            }
+            val json = JSONObject()
+            
+            // Create position array
+            val positionArray = JSONArray()
+            positionArray.put(0)
+            positionArray.put(0)
+            positionArray.put(0)
+            json.put("position", positionArray)
+            
+            // Create identity rotation matrix
+            val rotationJson = JSONObject()
+            
+            val row0 = JSONArray()
+            row0.put(1)
+            row0.put(0)
+            row0.put(0)
+            rotationJson.put("0", row0)
+            
+            val row1 = JSONArray()
+            row1.put(0)
+            row1.put(1)
+            row1.put(0)
+            rotationJson.put("1", row1)
+            
+            val row2 = JSONArray()
+            row2.put(0)
+            row2.put(0)
+            row2.put(1)
+            rotationJson.put("2", row2)
+            
+            json.put("rotation", rotationJson)
+            
+            // Set toggle state
+            json.put("button", false)
+            json.put("toggle", isActive)
 
             webSocket?.send(json.toString())
             Log.d(TAG, "Sent toggle state: $isActive")
         } catch (e: Exception) {
             Log.e(TAG, "Error sending toggle state: ${e.message}")
-        }
-    }
-
-    /**
-     * Sends button press to the server.
-     */
-    fun sendButtonPress() {
-        try {
-            if (!isConnected) return
-
-            val json = JSONObject().apply {
-                put("type", "button")
-                put("pressed", true)
-            }
-
-            webSocket?.send(json.toString())
-            Log.d(TAG, "Sent button press")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error sending button press: ${e.message}")
         }
     }
 
@@ -178,9 +307,42 @@ class WebSocketClient(private val serverUrl: String) : DefaultLifecycleObserver 
         try {
             if (!isConnected) return
 
-            val json = JSONObject().apply {
-                put("type", "reset")
-            }
+            val json = JSONObject()
+            
+            // Create position array
+            val positionArray = JSONArray()
+            positionArray.put(0)
+            positionArray.put(0)
+            positionArray.put(0)
+            json.put("position", positionArray)
+            
+            // Create identity rotation matrix
+            val rotationJson = JSONObject()
+            
+            val row0 = JSONArray()
+            row0.put(1)
+            row0.put(0)
+            row0.put(0)
+            rotationJson.put("0", row0)
+            
+            val row1 = JSONArray()
+            row1.put(0)
+            row1.put(1)
+            row1.put(0)
+            rotationJson.put("1", row1)
+            
+            val row2 = JSONArray()
+            row2.put(0)
+            row2.put(0)
+            row2.put(1)
+            rotationJson.put("2", row2)
+            
+            json.put("rotation", rotationJson)
+            
+            // Set reset flag
+            json.put("button", false)
+            json.put("toggle", false)
+            json.put("reset", true)
 
             webSocket?.send(json.toString())
             Log.d(TAG, "Sent reset pose command")
