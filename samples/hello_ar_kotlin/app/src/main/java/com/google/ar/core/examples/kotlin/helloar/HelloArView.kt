@@ -25,6 +25,7 @@ import android.widget.Button
 import android.widget.Switch
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.FrameLayout
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.widget.Toast
@@ -34,35 +35,53 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.ar.core.Config
 import com.google.ar.core.examples.java.common.helpers.SnackbarHelper
 import com.google.ar.core.examples.kotlin.helloar.DoubleTapHelper
+import com.google.ar.core.examples.java.common.samplerender.SampleRender
 
 /** Contains UI elements for Hello AR. */
 class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
-  val root = View.inflate(activity, R.layout.activity_main, null)
-  val surfaceView = root.findViewById<GLSurfaceView>(R.id.surfaceview)
-  val poseTextView = root.findViewById<TextView>(R.id.pose_text_view)
-  val settingsButton =
-    root.findViewById<ImageButton>(R.id.settings_button).apply {
-      setOnClickListener { v ->
-        PopupMenu(activity, v).apply {
-          setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-              R.id.depth_settings -> launchDepthSettingsMenuDialog()
-              R.id.instant_placement_settings -> launchInstantPlacementSettingsMenuDialog()
-              R.id.position_controls -> showPositionControlsDialog()
-              R.id.rotation_controls -> showRotationControlsDialog()
-              R.id.scale_controls -> showScaleControlsDialog()
-              R.id.snapping_controls -> showSnappingControlsDialog()
-              else -> null
-            } != null
-          }
-          inflate(R.menu.settings_menu)
-          show()
+  val root = View.inflate(activity, R.layout.activity_hello_ar, null)
+  val surfaceView = GLSurfaceView(activity).apply {
+    preserveEGLContextOnPause = true
+    setEGLContextClientVersion(2)
+    setEGLConfigChooser(8, 8, 8, 8, 16, 0)
+  }
+  
+  // Reference to UI elements from activity_hello_ar.xml
+  val posXTextView = root.findViewById<TextView>(R.id.pos_x_value)
+  val posYTextView = root.findViewById<TextView>(R.id.pos_y_value)
+  val posZTextView = root.findViewById<TextView>(R.id.pos_z_value)
+  val rotRollTextView = root.findViewById<TextView>(R.id.rot_roll_value)
+  val rotPitchTextView = root.findViewById<TextView>(R.id.rot_pitch_value)
+  val rotYawTextView = root.findViewById<TextView>(R.id.rot_yaw_value)
+  
+  // Add the surfaceView to the AR fragment container
+  init {
+    val fragmentContainer = root.findViewById<FrameLayout>(R.id.ar_fragment_container)
+    fragmentContainer.addView(surfaceView)
+  }
+  
+  // Find settings button safely
+  val settingsButton = root.findViewById<ImageButton>(R.id.settings_button)?.apply {
+    setOnClickListener { v ->
+      PopupMenu(activity, v).apply {
+        setOnMenuItemClickListener { item ->
+          when (item.itemId) {
+            R.id.position_controls -> showPositionControlsDialog()
+            R.id.rotation_controls -> showRotationControlsDialog()
+            R.id.scale_controls -> showScaleControlsDialog()
+            R.id.snapping_controls -> showSnappingControlsDialog()
+            else -> null
+          } != null
         }
+        inflate(R.menu.settings_menu)
+        show()
       }
     }
+  }
 
+  // Get session from activity directly
   val session
-    get() = activity.arCoreSessionHelper.session
+    get() = activity.session
 
   val snackbarHelper = SnackbarHelper()
   val tapHelper = DoubleTapHelper(activity).also { surfaceView.setOnTouchListener(it) }
@@ -70,11 +89,49 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
   // Reference to the renderer to access the PoseTracker
   private var renderer: HelloArRenderer? = null
   
-  /**
-   * Sets the renderer reference to access the PoseTracker
-   */
+  override fun onResume(owner: LifecycleOwner) {
+    // Only call onResume on the surfaceView if it has been properly initialized
+    try {
+      surfaceView.onResume()
+    } catch (e: Exception) {
+      // Log the exception but don't crash
+      android.util.Log.e("HelloArView", "Error resuming GLSurfaceView: ${e.message}")
+    }
+    
+    // Set up the renderer with the surface view if it's not already set up
+    // and if the renderer is available from the activity
+    if (renderer == null) {
+      try {
+        renderer = activity.renderer
+        if (renderer != null) {
+          SampleRender(surfaceView, renderer!!, activity.assets)
+        }
+      } catch (e: Exception) {
+        // The renderer might not be initialized yet, which is fine
+        // We'll set it later when it becomes available
+        android.util.Log.d("HelloArView", "Renderer not yet available: ${e.message}")
+      }
+    }
+  }
+  
+  override fun onPause(owner: LifecycleOwner) {
+    try {
+      surfaceView.onPause()
+    } catch (e: Exception) {
+      // Log the exception but don't crash
+      android.util.Log.e("HelloArView", "Error pausing GLSurfaceView: ${e.message}")
+    }
+  }
+  
+  // Sets the renderer reference to access the PoseTracker
   fun setRenderer(renderer: HelloArRenderer) {
     this.renderer = renderer
+    // Initialize the SampleRender here since we now have a valid renderer
+    try {
+      SampleRender(surfaceView, renderer, activity.assets)
+    } catch (e: Exception) {
+      android.util.Log.e("HelloArView", "Error initializing SampleRender: ${e.message}")
+    }
   }
 
   /**
@@ -82,16 +139,13 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
    */
   fun updatePoseDisplay(relativePose: PoseTracker.RelativePose) {
     activity.runOnUiThread {
-      poseTextView.text = relativePose.toFormattedString()
+      posXTextView.text = String.format("%.2f", relativePose.x)
+      posYTextView.text = String.format("%.2f", relativePose.y)
+      posZTextView.text = String.format("%.2f", relativePose.z)
+      rotRollTextView.text = String.format("%.2f", relativePose.roll)
+      rotPitchTextView.text = String.format("%.2f", relativePose.pitch)
+      rotYawTextView.text = String.format("%.2f", relativePose.yaw)
     }
-  }
-
-  override fun onResume(owner: LifecycleOwner) {
-    surfaceView.onResume()
-  }
-
-  override fun onPause(owner: LifecycleOwner) {
-    surfaceView.onPause()
   }
 
   /**
@@ -314,70 +368,18 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
    * DepthSettings.useDepthForOcclusion().
    */
   fun showOcclusionDialogIfNeeded() {
-    val session = session ?: return
-    val isDepthSupported = session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)
-    if (!activity.depthSettings.shouldShowDepthEnableDialog() || !isDepthSupported) {
-      return // Don't need to show dialog.
-    }
-
-    // Asks the user whether they want to use depth-based occlusion.
-    AlertDialog.Builder(activity)
-      .setTitle(R.string.options_title_with_depth)
-      .setMessage(R.string.depth_use_explanation)
-      .setPositiveButton(R.string.button_text_enable_depth) { _, _ ->
-        activity.depthSettings.setUseDepthForOcclusion(true)
-      }
-      .setNegativeButton(R.string.button_text_disable_depth) { _, _ ->
-        activity.depthSettings.setUseDepthForOcclusion(false)
-      }
-      .show()
+    // Simplified to do nothing since we're not using depth features
+    return
   }
 
   private fun launchInstantPlacementSettingsMenuDialog() {
-    val resources = activity.resources
-    val strings = resources.getStringArray(R.array.instant_placement_options_array)
-    val checked = booleanArrayOf(activity.instantPlacementSettings.isInstantPlacementEnabled)
-    AlertDialog.Builder(activity)
-      .setTitle(R.string.options_title_instant_placement)
-      .setMultiChoiceItems(strings, checked) { _, which, isChecked -> checked[which] = isChecked }
-      .setPositiveButton(R.string.done) { _, _ ->
-        val session = session ?: return@setPositiveButton
-        activity.instantPlacementSettings.isInstantPlacementEnabled = checked[0]
-        activity.configureSession(session)
-      }
-      .show()
+    // Simplified to do nothing since we're not using instant placement
+    Toast.makeText(activity, "Instant placement not supported in this version", Toast.LENGTH_SHORT).show()
   }
 
   /** Shows checkboxes to the user to facilitate toggling of depth-based effects. */
   private fun launchDepthSettingsMenuDialog() {
-    val session = session ?: return
-
-    // Shows the dialog to the user.
-    val resources: Resources = activity.resources
-    val checkboxes =
-      booleanArrayOf(
-        activity.depthSettings.useDepthForOcclusion(),
-        activity.depthSettings.depthColorVisualizationEnabled()
-      )
-    if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-      // With depth support, the user can select visualization options.
-      val stringArray = resources.getStringArray(R.array.depth_options_array)
-      AlertDialog.Builder(activity)
-        .setTitle(R.string.options_title_with_depth)
-        .setMultiChoiceItems(stringArray, checkboxes) { _, which, isChecked ->
-          checkboxes[which] = isChecked
-        }
-        .setPositiveButton(R.string.done) { _, _ ->
-          activity.depthSettings.setUseDepthForOcclusion(checkboxes[0])
-          activity.depthSettings.setDepthColorVisualizationEnabled(checkboxes[1])
-        }
-        .show()
-    } else {
-      // Without depth support, no settings are available.
-      AlertDialog.Builder(activity)
-        .setTitle(R.string.options_title_without_depth)
-        .setPositiveButton(R.string.done) { _, _ -> /* No settings to apply. */ }
-        .show()
-    }
+    // Simplified to do nothing since we're not using depth features
+    Toast.makeText(activity, "Depth settings not supported in this version", Toast.LENGTH_SHORT).show()
   }
 }

@@ -54,7 +54,7 @@
         android:name="com.google.ar.core.examples.kotlin.helloar.HelloArActivity"
         android:configChanges="orientation|screenSize"
         android:exported="true"
-        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
         android:screenOrientation="locked">
     </activity>
     <!-- Indicates whether "Google Play Services for AR" (ARCore) is "required" or "optional". -->

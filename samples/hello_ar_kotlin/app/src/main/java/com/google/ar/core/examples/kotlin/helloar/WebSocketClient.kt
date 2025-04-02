@@ -15,9 +15,11 @@
  */
 package com.google.ar.core.examples.kotlin.helloar
 
+import android.hardware.SensorManager
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.google.ar.core.Pose
 import okhttp3.*
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
@@ -71,57 +73,119 @@ class WebSocketClient(private val serverUrl: String) : DefaultLifecycleObserver 
      * Connect to the WebSocket server.
      */
     fun connect() {
-        if (isConnected) return
+        try {
+            if (isConnected) return
 
-        val request = Request.Builder()
-            .url(serverUrl)
-            .build()
+            val request = Request.Builder()
+                .url(serverUrl)
+                .build()
 
-        webSocket = client.newWebSocket(request, webSocketListener)
-        Log.d(TAG, "Connecting to WebSocket server at $serverUrl")
+            webSocket = client.newWebSocket(request, webSocketListener)
+            Log.d(TAG, "Connecting to WebSocket server at $serverUrl")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error connecting to WebSocket: ${e.message}")
+        }
     }
 
     /**
      * Disconnect from the WebSocket server.
      */
     fun disconnect() {
-        cancelReconnect()
-        webSocket?.close(1000, "Closing connection")
-        webSocket = null
-        isConnected = false
+        try {
+            cancelReconnect()
+            webSocket?.close(1000, "Closing connection")
+            webSocket = null
+            isConnected = false
+        } catch (e: Exception) {
+            Log.e(TAG, "Error disconnecting from WebSocket: ${e.message}")
+        }
     }
 
     /**
-     * Send pose data to the server.
+     * Sends pose data to the server.
      */
-    fun sendPoseData(pose: PoseTracker.RelativePose) {
-        if (!isConnected) {
-            connect()
-            return
-        }
-
+    fun sendPoseData(
+        position: FloatArray,
+        rotation: FloatArray,
+        isToggleActive: Boolean
+    ) {
         try {
-            val jsonObject = JSONObject().apply {
-                // Position data
-                put("x", pose.x)
-                put("y", pose.y)
-                put("z", pose.z)
-                
-                // Rotation data (in degrees)
-                put("roll", pose.roll)
-                put("pitch", pose.pitch)
-                put("yaw", pose.yaw)
-                
-                // Scale
-                put("scale", pose.scale)
-                
-                // Timestamp
-                put("timestamp", System.currentTimeMillis())
+            if (!isConnected) return
+
+            val json = JSONObject().apply {
+                put("type", "pose")
+                put("position", JSONObject().apply {
+                    put("x", position[0])
+                    put("y", position[1])
+                    put("z", position[2])
+                })
+                put("rotation", JSONObject().apply {
+                    put("roll", rotation[0])
+                    put("pitch", rotation[1])
+                    put("yaw", rotation[2])
+                })
+                put("isToggleActive", isToggleActive)
             }
 
-            webSocket?.send(jsonObject.toString())
+            webSocket?.send(json.toString())
         } catch (e: Exception) {
             Log.e(TAG, "Error sending pose data: ${e.message}")
+        }
+    }
+
+    /**
+     * Sends toggle state to the server.
+     */
+    fun sendToggleState(isActive: Boolean) {
+        try {
+            if (!isConnected) return
+
+            val json = JSONObject().apply {
+                put("type", "toggle")
+                put("isActive", isActive)
+            }
+
+            webSocket?.send(json.toString())
+            Log.d(TAG, "Sent toggle state: $isActive")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error sending toggle state: ${e.message}")
+        }
+    }
+
+    /**
+     * Sends button press to the server.
+     */
+    fun sendButtonPress() {
+        try {
+            if (!isConnected) return
+
+            val json = JSONObject().apply {
+                put("type", "button")
+                put("pressed", true)
+            }
+
+            webSocket?.send(json.toString())
+            Log.d(TAG, "Sent button press")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error sending button press: ${e.message}")
+        }
+    }
+
+    /**
+     * Sends reset pose command to the server.
+     */
+    fun sendResetPose() {
+        try {
+            if (!isConnected) return
+
+            val json = JSONObject().apply {
+                put("type", "reset")
+            }
+
+            webSocket?.send(json.toString())
+            Log.d(TAG, "Sent reset pose command")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error sending reset pose command: ${e.message}")
         }
     }
 
@@ -130,12 +194,12 @@ class WebSocketClient(private val serverUrl: String) : DefaultLifecycleObserver 
      */
     private fun scheduleReconnect() {
         cancelReconnect()
-        
+
         val job = Runnable {
             Log.d(TAG, "Attempting to reconnect to WebSocket server...")
             connect()
         }
-        
+
         reconnectJob = job
         reconnectHandler.postDelayed(job, RECONNECT_DELAY)
     }

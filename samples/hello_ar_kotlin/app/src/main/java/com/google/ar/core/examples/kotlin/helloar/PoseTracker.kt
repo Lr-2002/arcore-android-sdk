@@ -49,6 +49,27 @@ class PoseTracker {
     private var snapGridSize = 0.05f  // 5cm grid
     private var snapRotationDegrees = 15f
 
+    /**
+     * Reset the pose tracker to the initial state.
+     * This clears all user translations, rotations, and resets the scale.
+     */
+    fun resetPose() {
+        // Reset user manipulations
+        userTranslation = floatArrayOf(0f, 0f, 0f)
+        userRotation = floatArrayOf(0f, 0f, 0f)
+        scale = 1.0f
+        
+        // Clear history for filters
+        positionHistory.clear()
+        rotationHistory.clear()
+        
+        // Reset the initial pose to null so it will be re-initialized on next frame
+        initialPose = null
+        
+        // Reset the current relative pose
+        currentRelativePose = RelativePose()
+    }
+    
     // Extension function to convert radians to degrees
     private fun Double.toDegrees() = this * 180.0 / PI
     
@@ -368,6 +389,18 @@ class PoseTracker {
         val yaw: Float = 0f,
         val scale: Float = 1.0f
     ) {
+        /**
+         * Position as a float array [x, y, z]
+         */
+        val position: FloatArray
+            get() = floatArrayOf(x, y, z)
+        
+        /**
+         * Rotation as a float array [roll, pitch, yaw]
+         */
+        val rotation: FloatArray
+            get() = floatArrayOf(roll, pitch, yaw)
+        
         /**
          * Returns a formatted string representation of the pose.
          */

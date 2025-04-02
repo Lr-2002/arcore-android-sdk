@@ -17,9 +17,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-  <item android:id="@+id/depth_settings" android:title="Depth API"/>
-  <item android:id="@+id/instant_placement_settings"
-      android:title="Instant Placement"/>
   <item android:id="@+id/position_controls" android:title="Position Controls"/>
   <item android:id="@+id/rotation_controls" android:title="Rotation Controls"/>
   <item android:id="@+id/scale_controls" android:title="Scale Controls"/>

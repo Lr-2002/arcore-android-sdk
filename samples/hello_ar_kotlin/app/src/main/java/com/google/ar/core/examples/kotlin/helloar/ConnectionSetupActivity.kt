@@ -19,30 +19,28 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
-import android.widget.Toast
+import android.widget.Button
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.textfield.TextInputEditText
 
 /**
- * Activity for setting up WebSocket connection parameters before starting the AR experience.
+ * Activity for setting up the WebSocket connection to the server.
  */
 class ConnectionSetupActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "ConnectionSetupActivity"
         
         // Keys for storing connection parameters
-        const val EXTRA_IP_ADDRESS = "ip_address"
-        const val EXTRA_PORT_NUMBER = "port_number"
+        const val EXTRA_SERVER_URL = "server_url"
         
         // Default values
         const val DEFAULT_IP_ADDRESS = "10.1.123.244"
         const val DEFAULT_PORT_NUMBER = "9999"
     }
     
-    private lateinit var ipAddressEditText: TextInputEditText
-    private lateinit var portNumberEditText: TextInputEditText
-    private lateinit var startButton: MaterialButton
+    private lateinit var ipAddressEditText: EditText
+    private lateinit var portNumberEditText: EditText
+    private lateinit var startButton: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,61 +57,27 @@ class ConnectionSetupActivity : AppCompatActivity() {
         
         // Set up button click listener
         startButton.setOnClickListener {
-            if (validateInputs()) {
-                startArExperience()
+            val ipAddress = ipAddressEditText.text.toString().trim()
+            val portNumber = portNumberEditText.text.toString().trim()
+
+            // Validate inputs
+            if (ipAddress.isEmpty()) {
+                ipAddressEditText.error = "IP address cannot be empty"
+                return@setOnClickListener
             }
-        }
-    }
-    
-    /**
-     * Validates user inputs for IP address and port number.
-     */
-    private fun validateInputs(): Boolean {
-        val ipAddress = ipAddressEditText.text.toString().trim()
-        val portNumber = portNumberEditText.text.toString().trim()
-        
-        // Check if IP address is valid
-        if (TextUtils.isEmpty(ipAddress)) {
-            ipAddressEditText.error = "IP address cannot be empty"
-            return false
-        }
-        
-        // Check if port number is valid
-        if (TextUtils.isEmpty(portNumber)) {
-            portNumberEditText.error = "Port number cannot be empty"
-            return false
-        }
-        
-        try {
-            val port = portNumber.toInt()
-            if (port <= 0 || port > 65535) {
-                portNumberEditText.error = "Port number must be between 1 and 65535"
-                return false
+
+            if (portNumber.isEmpty()) {
+                portNumberEditText.error = "Port number cannot be empty"
+                return@setOnClickListener
             }
-        } catch (e: NumberFormatException) {
-            portNumberEditText.error = "Invalid port number"
-            return false
+
+            // Create WebSocket URL
+            val serverUrl = "ws://$ipAddress:$portNumber"
+
+            // Start HelloArActivity with the server URL
+            val intent = Intent(this, HelloArActivity::class.java)
+            intent.putExtra(EXTRA_SERVER_URL, serverUrl)
+            startActivity(intent)
         }
-        
-        return true
-    }
-    
-    /**
-     * Starts the AR experience activity with the connection parameters.
-     */
-    private fun startArExperience() {
-        val ipAddress = ipAddressEditText.text.toString().trim()
-        val portNumber = portNumberEditText.text.toString().trim()
-        
-        Log.d(TAG, "Starting AR experience with IP: $ipAddress, Port: $portNumber")
-        
-        // Create intent with connection parameters
-        val intent = Intent(this, HelloArActivity::class.java).apply {
-            putExtra(EXTRA_IP_ADDRESS, ipAddress)
-            putExtra(EXTRA_PORT_NUMBER, portNumber)
-        }
-        
-        // Start the AR activity
-        startActivity(intent)
     }
 }
